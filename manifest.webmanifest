@@ -1,0 +1,19 @@
+{
+  "name": "小型輪荷重走行試験機 稼働計算",
+  "short_name": "稼働計算",
+  "description": "開始日時・走行回数・停止日時を相互計算します。",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#155eef",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
