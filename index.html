@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#155eef">
+  <meta name="description" content="小型輪荷重走行試験機の開始日時・走行回数・停止日時を相互計算するスマートフォン対応アプリです。">
+  <title>輪荷重試験機 稼働計算</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon.svg">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface-2: #eef4ff;
+      --text: #15213a;
+      --muted: #667085;
+      --line: #d8e0ee;
+      --primary: #155eef;
+      --primary-dark: #004eeb;
+      --success: #027a48;
+      --danger: #b42318;
+      --shadow: 0 12px 35px rgba(16, 24, 40, .08);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at 100% 0%, rgba(21, 94, 239, .12), transparent 30rem), var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      line-height: 1.55;
+    }
+    button, input { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+    .app {
+      width: min(100%, 760px);
+      margin: 0 auto;
+      padding: max(20px, env(safe-area-inset-top)) 16px max(32px, env(safe-area-inset-bottom));
+    }
+    .hero { padding: 8px 4px 18px; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 8px;
+      color: var(--primary);
+      font-size: .83rem;
+      font-weight: 800;
+      letter-spacing: .04em;
+    }
+    .eyebrow::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 0 5px rgba(21, 94, 239, .12);
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.65rem, 6vw, 2.4rem);
+      line-height: 1.25;
+      letter-spacing: -.03em;
+    }
+    .lead { margin: 10px 0 0; color: var(--muted); font-size: .95rem; }
+    .card {
+      margin-top: 14px;
+      padding: 18px;
+      background: rgba(255, 255, 255, .96);
+      border: 1px solid rgba(216, 224, 238, .9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    h2 { margin: 0; font-size: 1.05rem; }
+    .badge {
+      flex: 0 0 auto;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--primary);
+      font-size: .74rem;
+      font-weight: 800;
+    }
+    .field { margin-top: 14px; }
+    .field:first-child { margin-top: 0; }
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: .91rem;
+      font-weight: 750;
+    }
+    .hint { display: block; margin-top: 6px; color: var(--muted); font-size: .78rem; }
+    input {
+      width: 100%;
+      min-height: 52px;
+      padding: 12px 13px;
+      border: 1.5px solid var(--line);
+      border-radius: 13px;
+      background: #fff;
+      color: var(--text);
+      font-size: 16px;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(21, 94, 239, .12);
+    }
+    input[aria-invalid="true"] { border-color: var(--danger); }
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: end;
+    }
+    .unit {
+      display: grid;
+      place-items: center;
+      min-width: 58px;
+      height: 52px;
+      padding: 0 12px;
+      border-radius: 13px;
+      background: var(--surface-2);
+      color: var(--primary);
+      font-weight: 800;
+    }
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .chip, .secondary-button, .copy-button, .install-button {
+      min-height: 44px;
+      border: 0;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 750;
+    }
+    .chip {
+      padding: 0 13px;
+      background: #eef2f8;
+      color: #344054;
+    }
+    .chip:active, .secondary-button:active, .copy-button:active, .install-button:active { transform: translateY(1px); }
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 14px;
+      padding: 5px;
+      border-radius: 15px;
+      background: #e9eef7;
+    }
+    .tab {
+      min-height: 50px;
+      padding: 9px;
+      border: 0;
+      border-radius: 11px;
+      background: transparent;
+      color: #475467;
+      cursor: pointer;
+      font-size: .9rem;
+      font-weight: 800;
+    }
+    .tab[aria-selected="true"] {
+      background: #fff;
+      color: var(--primary);
+      box-shadow: 0 2px 10px rgba(16, 24, 40, .08);
+    }
+    [hidden] { display: none !important; }
+    .result {
+      margin-top: 16px;
+      padding: 17px;
+      border: 1px solid #b2ccff;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #eff4ff, #f8faff);
+    }
+    .result-label {
+      margin: 0;
+      color: #344054;
+      font-size: .8rem;
+      font-weight: 800;
+      letter-spacing: .03em;
+    }
+    .result-main {
+      margin: 5px 0 0;
+      color: #004eeb;
+      font-size: clamp(1.35rem, 5.6vw, 2rem);
+      font-weight: 850;
+      line-height: 1.35;
+      word-break: keep-all;
+    }
+    .result-sub { margin: 7px 0 0; color: #475467; font-size: .86rem; }
+    .error {
+      margin: 12px 0 0;
+      color: var(--danger);
+      font-size: .86rem;
+      font-weight: 700;
+    }
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .copy-button {
+      padding: 0 14px;
+      background: var(--primary);
+      color: #fff;
+    }
+    .copy-button:hover { background: var(--primary-dark); }
+    .secondary-button {
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: #344054;
+    }
+    .assumption {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      padding: 13px;
+      border-radius: 14px;
+      background: #fffaeb;
+      color: #7a2e0e;
+      font-size: .83rem;
+    }
+    .assumption strong { white-space: nowrap; }
+    .footer-actions { display: flex; justify-content: center; margin-top: 18px; }
+    .install-button {
+      display: none;
+      padding: 0 18px;
+      background: #101828;
+      color: #fff;
+    }
+    .install-button.visible { display: inline-flex; align-items: center; justify-content: center; }
+    footer { padding: 22px 8px 0; color: var(--muted); text-align: center; font-size: .76rem; }
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: max(20px, env(safe-area-inset-bottom));
+      z-index: 10;
+      transform: translate(-50%, 20px);
+      max-width: calc(100% - 32px);
+      padding: 11px 16px;
+      border-radius: 999px;
+      background: #101828;
+      color: #fff;
+      font-size: .84rem;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s, transform .2s;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    @media (min-width: 640px) {
+      .app { padding-left: 24px; padding-right: 24px; }
+      .card { padding: 24px; }
+      .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .two-cols .field { margin-top: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <p class="eyebrow">スマホ対応・自動計算</p>
+      <h1>小型輪荷重走行試験機<br>稼働計算</h1>
+      <p class="lead">開始日時を基準に、走行回数から停止日時を計算。停止日時から走行回数を逆算することもできます。</p>
+    </header>
+
+    <section class="card" aria-labelledby="common-title">
+      <div class="card-title">
+        <h2 id="common-title">共通設定</h2>
+        <span class="badge">入力は自動保存</span>
+      </div>
+      <div class="two-cols">
+        <div class="field">
+          <label for="startDate">開始日時</label>
+          <input id="startDate" type="datetime-local" step="60" value="2026-07-16T09:30">
+          <div class="quick-actions">
+            <button class="chip" type="button" id="setNow">現在日時</button>
+            <button class="chip" type="button" id="setExample">例：7/16 9:30</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="rate">1時間当たりの走行回数</label>
+          <div class="input-row">
+            <input id="rate" type="number" inputmode="decimal" min="0.000001" step="1" value="3015">
+            <span class="unit">回/時</span>
+          </div>
+          <span class="hint">Excel版と同じ初期値：3,015回/時</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="calc-title">
+      <div class="card-title"><h2 id="calc-title">計算方法を選択</h2></div>
+      <div class="tabs" role="tablist" aria-label="計算方法">
+        <button class="tab" id="tab-count" type="button" role="tab" aria-selected="true" aria-controls="panel-count">回数 → 停止日時</button>
+        <button class="tab" id="tab-stop" type="button" role="tab" aria-selected="false" aria-controls="panel-stop">停止日時 → 回数</button>
+      </div>
+
+      <div id="panel-count" role="tabpanel" aria-labelledby="tab-count">
+        <div class="field">
+          <label for="runCount">設定する走行回数</label>
+          <div class="input-row">
+            <input id="runCount" type="number" inputmode="numeric" min="0" step="1" value="100000">
+            <span class="unit">回</span>
+          </div>
+        </div>
+        <p id="countError" class="error" role="alert" hidden></p>
+        <div class="result" aria-live="polite">
+          <p class="result-label">停止日時</p>
+          <p class="result-main" id="stopResult">—</p>
+          <p class="result-sub" id="durationResult">—</p>
+        </div>
+        <div class="button-row">
+          <button class="copy-button" type="button" id="copyCountResult">結果をコピー</button>
+          <button class="secondary-button" type="button" id="resetCount">回数をリセット</button>
+        </div>
+      </div>
+
+      <div id="panel-stop" role="tabpanel" aria-labelledby="tab-stop" hidden>
+        <div class="field">
+          <label for="stopDate">設定する停止日時</label>
+          <input id="stopDate" type="datetime-local" step="60" value="2026-07-17T18:40">
+          <span class="hint">開始日時より後の日時を入力してください。</span>
+        </div>
+        <p id="stopError" class="error" role="alert" hidden></p>
+        <div class="result" aria-live="polite">
+          <p class="result-label">完了できる走行回数</p>
+          <p class="result-main" id="countResult">—</p>
+          <p class="result-sub" id="elapsedResult">—</p>
+        </div>
+        <div class="button-row">
+          <button class="copy-button" type="button" id="copyStopResult">結果をコピー</button>
+          <button class="secondary-button" type="button" id="resetStop">停止日時をリセット</button>
+        </div>
+      </div>
+
+      <div class="assumption">
+        <strong>計算条件</strong>
+        <span>24時間連続稼働・途中停止なし。停止日時からの逆算は、その時刻までに完了できる整数回数を切り捨てで表示します。</span>
+      </div>
+    </section>
+
+    <div class="footer-actions"><button class="install-button" id="installApp" type="button">ホーム画面に追加</button></div>
+    <footer>計算は端末内で行われ、入力内容は外部へ送信されません。</footer>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      "use strict";
+      const $ = (id) => document.getElementById(id);
+      const STORAGE_KEY = "wheelLoadCalculator.v1";
+      const MS_PER_HOUR = 60 * 60 * 1000;
+      const elements = {
+        startDate: $("startDate"), rate: $("rate"), runCount: $("runCount"), stopDate: $("stopDate"),
+        stopResult: $("stopResult"), durationResult: $("durationResult"), countResult: $("countResult"), elapsedResult: $("elapsedResult"),
+        countError: $("countError"), stopError: $("stopError"), tabCount: $("tab-count"), tabStop: $("tab-stop"),
+        panelCount: $("panel-count"), panelStop: $("panel-stop"), toast: $("toast"), installApp: $("installApp")
+      };
+      let deferredInstallPrompt = null;
+      let toastTimer = null;
+
+      function parseLocalDateTime(value) {
+        if (!value) return null;
+        const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/);
+        if (!match) return null;
+        const [, y, m, d, hh, mm, ss = "0"] = match;
+        const date = new Date(Number(y), Number(m) - 1, Number(d), Number(hh), Number(mm), Number(ss), 0);
+        return Number.isNaN(date.getTime()) ? null : date;
+      }
+      function toLocalInputValue(date) {
+        const pad = (n) => String(n).padStart(2, "0");
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+      }
+      function formatDateTime(date) {
+        return new Intl.DateTimeFormat("ja-JP", {
+          year: "numeric", month: "2-digit", day: "2-digit", weekday: "short", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+        }).format(date);
+      }
+      function formatDuration(totalSeconds) {
+        const safeSeconds = Math.max(0, Math.round(totalSeconds));
+        const days = Math.floor(safeSeconds / 86400);
+        const hours = Math.floor((safeSeconds % 86400) / 3600);
+        const minutes = Math.floor((safeSeconds % 3600) / 60);
+        const seconds = safeSeconds % 60;
+        const parts = [];
+        if (days) parts.push(`${days}日`);
+        if (hours || days) parts.push(`${hours}時間`);
+        if (minutes || hours || days) parts.push(`${minutes}分`);
+        parts.push(`${seconds}秒`);
+        return parts.join(" ");
+      }
+      function readPositiveNumber(input) {
+        const value = Number(input.value);
+        return Number.isFinite(value) && value > 0 ? value : null;
+      }
+      function setError(element, input, message = "") {
+        element.textContent = message;
+        element.hidden = !message;
+        input.setAttribute("aria-invalid", message ? "true" : "false");
+      }
+      function calculateFromCount() {
+        const start = parseLocalDateTime(elements.startDate.value);
+        const rate = readPositiveNumber(elements.rate);
+        const count = Number(elements.runCount.value);
+        let error = "";
+        if (!start) error = "開始日時を入力してください。";
+        else if (!rate) error = "1時間当たりの走行回数は0より大きい値を入力してください。";
+        else if (!Number.isFinite(count) || count < 0) error = "走行回数は0以上の数値を入力してください。";
+        setError(elements.countError, elements.runCount, error);
+        if (error) {
+          elements.stopResult.textContent = "—";
+          elements.durationResult.textContent = "入力内容を確認してください。";
+          return null;
+        }
+        const durationHours = count / rate;
+        const durationMs = durationHours * MS_PER_HOUR;
+        const stop = new Date(start.getTime() + durationMs);
+        const durationText = formatDuration(durationMs / 1000);
+        elements.stopResult.textContent = formatDateTime(stop);
+        elements.durationResult.textContent = `必要時間：${durationText}（${durationHours.toLocaleString("ja-JP", { maximumFractionDigits: 6 })}時間）`;
+        return { text: `小型輪荷重走行試験機 稼働計算\n開始日時：${formatDateTime(start)}\n走行速度：${rate.toLocaleString("ja-JP")}回/時\n走行回数：${count.toLocaleString("ja-JP")}回\n停止日時：${formatDateTime(stop)}\n必要時間：${durationText}` };
+      }
+      function calculateFromStop() {
+        const start = parseLocalDateTime(elements.startDate.value);
+        const stop = parseLocalDateTime(elements.stopDate.value);
+        const rate = readPositiveNumber(elements.rate);
+        let error = "";
+        if (!start) error = "開始日時を入力してください。";
+        else if (!stop) error = "停止日時を入力してください。";
+        else if (!rate) error = "1時間当たりの走行回数は0より大きい値を入力してください。";
+        else if (stop.getTime() < start.getTime()) error = "停止日時は開始日時以降に設定してください。";
+        setError(elements.stopError, elements.stopDate, error);
+        if (error) {
+          elements.countResult.textContent = "—";
+          elements.elapsedResult.textContent = "入力内容を確認してください。";
+          return null;
+        }
+        const elapsedMs = stop.getTime() - start.getTime();
+        const exactCount = (elapsedMs / MS_PER_HOUR) * rate;
+        const completedCount = Math.floor(exactCount + 1e-9);
+        const elapsedText = formatDuration(elapsedMs / 1000);
+        elements.countResult.textContent = `${completedCount.toLocaleString("ja-JP")} 回`;
+        elements.elapsedResult.textContent = `経過時間：${elapsedText}（理論値 ${exactCount.toLocaleString("ja-JP", { maximumFractionDigits: 3 })}回）`;
+        return { text: `小型輪荷重走行試験機 稼働計算\n開始日時：${formatDateTime(start)}\n停止日時：${formatDateTime(stop)}\n走行速度：${rate.toLocaleString("ja-JP")}回/時\n完了走行回数：${completedCount.toLocaleString("ja-JP")}回\n経過時間：${elapsedText}` };
+      }
+      function saveState() {
+        const state = {
+          startDate: elements.startDate.value, rate: elements.rate.value, runCount: elements.runCount.value, stopDate: elements.stopDate.value,
+          mode: elements.tabCount.getAttribute("aria-selected") === "true" ? "count" : "stop"
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+      function loadState() {
+        try {
+          const state = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          if (!state) return;
+          if (state.startDate) elements.startDate.value = state.startDate;
+          if (state.rate) elements.rate.value = state.rate;
+          if (state.runCount !== undefined) elements.runCount.value = state.runCount;
+          if (state.stopDate) elements.stopDate.value = state.stopDate;
+          switchMode(state.mode === "stop" ? "stop" : "count", false);
+        } catch (_) { localStorage.removeItem(STORAGE_KEY); }
+      }
+      function recalculate() { calculateFromCount(); calculateFromStop(); saveState(); }
+      function switchMode(mode, focus = true) {
+        const isCount = mode === "count";
+        elements.tabCount.setAttribute("aria-selected", String(isCount));
+        elements.tabStop.setAttribute("aria-selected", String(!isCount));
+        elements.panelCount.hidden = !isCount;
+        elements.panelStop.hidden = isCount;
+        if (focus) (isCount ? elements.runCount : elements.stopDate).focus({ preventScroll: true });
+        saveState();
+      }
+      function showToast(message) {
+        clearTimeout(toastTimer);
+        elements.toast.textContent = message;
+        elements.toast.classList.add("show");
+        toastTimer = setTimeout(() => elements.toast.classList.remove("show"), 1800);
+      }
+      async function copyText(text) {
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast("結果をコピーしました");
+        } catch (_) {
+          const textarea = document.createElement("textarea");
+          textarea.value = text;
+          textarea.setAttribute("readonly", "");
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand("copy");
+          textarea.remove();
+          showToast("結果をコピーしました");
+        }
+      }
+      [elements.startDate, elements.rate, elements.runCount, elements.stopDate].forEach((input) => {
+        input.addEventListener("input", recalculate);
+        input.addEventListener("change", recalculate);
+      });
+      elements.tabCount.addEventListener("click", () => switchMode("count"));
+      elements.tabStop.addEventListener("click", () => switchMode("stop"));
+      $("setNow").addEventListener("click", () => {
+        const now = new Date(); now.setSeconds(0, 0); elements.startDate.value = toLocalInputValue(now); recalculate();
+      });
+      $("setExample").addEventListener("click", () => { elements.startDate.value = "2026-07-16T09:30"; recalculate(); });
+      $("resetCount").addEventListener("click", () => { elements.runCount.value = "100000"; recalculate(); });
+      $("resetStop").addEventListener("click", () => {
+        const start = parseLocalDateTime(elements.startDate.value) || new Date();
+        elements.stopDate.value = toLocalInputValue(new Date(start.getTime() + 24 * MS_PER_HOUR)); recalculate();
+      });
+      $("copyCountResult").addEventListener("click", () => { const result = calculateFromCount(); if (result) copyText(result.text); });
+      $("copyStopResult").addEventListener("click", () => { const result = calculateFromStop(); if (result) copyText(result.text); });
+      window.addEventListener("beforeinstallprompt", (event) => {
+        event.preventDefault(); deferredInstallPrompt = event; elements.installApp.classList.add("visible");
+      });
+      elements.installApp.addEventListener("click", async () => {
+        if (!deferredInstallPrompt) return;
+        deferredInstallPrompt.prompt(); await deferredInstallPrompt.userChoice; deferredInstallPrompt = null; elements.installApp.classList.remove("visible");
+      });
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
+      }
+      loadState();
+      recalculate();
+    })();
+  </script>
+</body>
+</html>
